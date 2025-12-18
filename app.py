@@ -34,10 +34,10 @@ if st.button("Recommend Assessments"):
                 else:
                     st.subheader("Recommended SHL Assessments")
                 
-for item in data:
-    st.markdown(f"### {item['assessment_name']}")
-    st.markdown(f"[Open Assessment]({item['assessment_url']})")
-    st.divider()
+                    for item in data:
+                        st.markdown(f"### {item['assessment_name']}")
+                        st.markdown(f"[Open Assessment]({item['assessment_url']})")
+                        st.divider()
 
             else:
                 st.error("API returned an error.")
