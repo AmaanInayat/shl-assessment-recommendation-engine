@@ -1,55 +1,35 @@
 import streamlit as st
 import requests
 
-# ===============================
-# API CONFIG
-# ===============================
 API_URL = "https://shl-assessment-recommendation-engine-apii.onrender.com"
 
-# ===============================
-# PAGE UI
-# ===============================
 st.title("SHL Assessment Recommendation Engine")
 
-st.write(
-    "Enter a job role. The system will fetch relevant SHL assessments "
-    "from the recommendation API."
-)
+st.write("Enter a job role to get relevant SHL assessments.")
 
 job_role = st.text_input("Job Role (e.g. Developer, Manager, Analyst)")
 
-# ===============================
-# BUTTON ACTION
-# ===============================
 if st.button("Recommend Assessments"):
     if job_role.strip() == "":
         st.warning("Please enter a job role.")
     else:
         st.info("Fetching recommendations...")
 
-        try:
-            response = requests.get(
-                f"{API_URL}/recommend",
-                params={"job_role": job_role},
-                timeout=10
-            )
+        response = requests.get(
+            f"{API_URL}/recommend",
+            params={"job_role": job_role}
+        )
 
-            if response.status_code == 200:
-                data = response.json()
+        if response.status_code == 200:
+            data = response.json()
 
-                if not data:
-                    st.info("No assessments found for this job role.")
-                else:
-                    st.subheader("Recommended SHL Assessments")
-
-                    for item in data:
-                        st.markdown(f"### {item.get('Assessment_Name', 'N/A')}")
-                        st.markdown(
-                            f"[Open Assessment]({item.get('Assessment_URL', '#')})"
-                        )
-                        st.divider()
+            if not data:
+                st.info("No assessments found.")
             else:
-                st.error("API returned an error.")
-
-        except Exception:
-            st.error("Unable to connect to the API.")
+                st.subheader("Recommended Assessments")
+                for item in data:
+                    st.markdown(f"### {item['Assessment_Name']}")
+                    st.markdown(f"[Open Assessment]({item['Assessment_URL']})")
+                    st.divider()
+        else:
+            st.error("API returned an error.")
