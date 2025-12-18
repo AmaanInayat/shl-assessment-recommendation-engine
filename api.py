@@ -24,7 +24,7 @@ def recommend(payload: dict):
         return any(word in text for word in jd_words)
 
     filtered = df[
-        df["Relevant Job Roles"].apply(is_relevant) |
+        df["Simple_Test_Category"].apply(is_relevant) |
         df["Assessment_Name"].apply(is_relevant)
     ]
 
