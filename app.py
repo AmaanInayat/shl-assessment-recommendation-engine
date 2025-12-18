@@ -1,39 +1,58 @@
 import streamlit as st
-import pandas as pd
+import requests
 
-# Page title
+# ===============================
+# API CONFIG
+# ===============================
+API_URL = "https://shl-assessment-recommendation-engine-apii.onrender.com"
+
+# ===============================
+# PAGE UI
+# ===============================
 st.title("SHL Assessment Recommendation Engine")
 
 st.write(
-    "Paste a job description below. The system will recommend relevant SHL assessments based on keyword matching."
+    "Enter a job role. The system will fetch relevant SHL assessments "
+    "from the recommendation API."
 )
 
-# Job Description input
-job_description = st.text_area("Job Description", height=200)
+job_role = st.text_input("Job Role (e.g. Developer, Manager, Analyst)")
 
-# Load SHL assessment data
-@st.cache_data
-def load_data():
-    return pd.read_excel("shl_individual_assessments.xlsx")
-
-df = load_data()
-
-# Recommend button
+# ===============================
+# API CALL
+# ===============================
 if st.button("Recommend Assessments"):
-    if job_description.strip() == "":
-        st.warning("Please paste a job description.")
+    if job_role.strip() == "":
+        st.warning("Please enter a job role.")
     else:
-        jd_words = job_description.lower().split()
+        with st.spinner("Fetching recommendations..."):
+            try:
+                response = requests.get(
+                    f"{API_URL}/recommend",
+                    params={"job_role": job_role},
+                    timeout=10
+                )
 
-        # Simple keyword matching
-        def is_relevant(name):
-            name = name.lower()
-            return any(word in name for word in jd_words)
+                if response.status_code == 200:
+                    data = response.json()
 
-        filtered_df = df[df["Assessment_Name"].apply(is_relevant)]
+                    if len(data) == 0:
+                        st.info("No assessments found for this job role.")
+                    else:
+                        st.subheader("Recommended SHL Assessments")
 
-        # If no match found, show fallback
-        if filtered_df.empty:
+                        for item in data:
+                            st.markdown(f"### {item.get('Assessment_Name', 'N/A')}")
+                            st.markdown(
+                                f"[Open Assessment]({item.get('Assessment_URL', '#')})"
+                            )
+                            st.divider()
+
+                else:
+                    st.error("API returned an error.")
+
+            except Exception as e:
+                st.error("Unable to connect to the API.")
             st.info(
                 "No strong keyword match found. Showing general recommended assessments."
             )
