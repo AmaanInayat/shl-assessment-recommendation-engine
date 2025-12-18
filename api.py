@@ -3,16 +3,36 @@ import pandas as pd
 
 app = FastAPI()
 
+# Load data once
 df = pd.read_excel("shl_individual_assessments.xlsx")
 
 @app.get("/")
 def home():
     return {"message": "SHL Assessment Recommendation API is running"}
 
-@app.get("/recommend")
-def recommend(job_role: str):
-    results = df[
-        df["Relevant Job Roles"]
-        .str.contains(job_role, case=False, na=False)
+@app.post("/recommend")
+def recommend(payload: dict):
+    job_description = payload.get("job_description", "").lower()
+
+    if not job_description:
+        return []
+
+    jd_words = job_description.split()
+
+    def is_relevant(text):
+        text = str(text).lower()
+        return any(word in text for word in jd_words)
+
+    filtered = df[
+        df["Relevant Job Roles"].apply(is_relevant) |
+        df["Assessment_Name"].apply(is_relevant)
     ]
-    return results.head(5).to_dict(orient="records")
+
+    if filtered.empty:
+        filtered = df.head(5)
+    else:
+        filtered = filtered.head(5)
+
+    return filtered[
+        ["Assessment_Name", "Assessment_URL"]
+    ].to_dict(orient="records")
